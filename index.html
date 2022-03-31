@@ -30,9 +30,10 @@
       <v-app>
         <v-main>
           <v-container>
-            <h1 justify="center">Lista telefônica</h1>
+            <h1>
+              Lista telefônica</h1>
             <v-btn color="primary" @click="modelCreate = true">Adicionar</v-btn>
-            <v-simple-table>
+            <v-simple-table v-if="phones.length">
               <template v-slot:default>
                 <thead>
                   <tr>
@@ -65,6 +66,9 @@
                   </tr>
                 </tbody>
               </template>
+            </v-simple-table>
+            <v-simple-table v-else>
+              <h1>Você ainda não possui contatos salvos em sua agenda.</h1>
             </v-simple-table>
             <v-row justify="center">
               <v-dialog
@@ -236,8 +240,11 @@
         },
       });
     </script>
-
     <style>
+      h1 {
+        font-size: 30px;
+        margin: 30px 0;
+      }
       label {
         width: 90%;
       }
