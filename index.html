@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
+    />
+    <title>Lista telefônica</title>
+  </head>
+  <body>
+    <div id="app">
+      <v-app>
+        <v-main>
+          <v-container>
+            <h1 justify="center">Lista telefônica</h1>
+            <v-btn color="primary" @click="modelCreate = true">Adicionar</v-btn>
+            <v-simple-table>
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="item in sortFunc()"
+                    :style="item.number.slice(0, 4) === '(11)' && {backgroundColor: 'lightblue'}"
+                  >
+                    <td>{{item.name}}</td>
+                    <td>{{item.number}}</td>
+                    <td>
+                      <div>
+                        <v-btn color="warning" @click="openEdit(item)">
+                          Editar
+                        </v-btn>
+                        <v-btn
+                          depressed
+                          color="error"
+                          @click="deleteContact(item)"
+                        >
+                          Excluir
+                        </v-btn>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
+            <v-row justify="center">
+              <v-dialog
+                v-model="modelCreate"
+                persistent
+                max-width="350"
+              >
+                <v-card>
+                  <v-card-text>
+                    <form @submit.prevent="addContact">
+                    <label>
+                      Digite o nome do novo contato
+                      <v-text-field
+                        type="text"
+                        placeholder="Ex.: Ana Lis"
+                        pattern="^((\b[A-zÀ-ú']{3,40}\b)\s*){2,}$"
+                        required
+                        v-model="phone.name"
+                      />
+                    </label>
+                    <label>
+                      Digite o telefone do novo contato
+                      <v-text-field
+                        type="text"
+                        placeholder="Ex.: (00) 00000-0000"
+                        pattern="\([0-9]{2}\)[\s][0-9]{5}-[0-9]{4}"
+                        required
+                        v-model="phone.number"
+                        :change="mask(phone.number, 'add')"
+                      />
+                    </label>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn color="green darken-1" text @click="closeAdd" reset>
+                        Sair
+                      </v-btn>
+                      <v-btn type="submit" color="green darken-1" text reset>
+                        Adicionar
+                      </v-btn>
+                    </v-card-actions>
+                  </form>
+                </v-card>
+              </v-dialog>
+            </v-row>
+            <v-row justify="center">
+              <v-dialog
+                v-model="modelEdit"
+                persistent
+                max-width="350"
+                padding="20"
+              >
+                <v-card>
+                  <v-card-text>
+                    <form @submit.prevent="editContact">
+                    <label>
+                      Digite o novo nome do contato
+                      <v-text-field
+                        type="text"
+                        placeholder="Ex.: Ana Lis"
+                        pattern="^((\b[A-zÀ-ú']{3,40}\b)\s*){2,}$"
+                        required
+                        v-model="phoneEdit.name"
+                      />
+                    </label>
+                    <label>
+                      Digite o novo telefone do contato
+                      <v-text-field
+                        type="tel"
+                        placeholder="Ex.: (00) 00000-0000"
+                        pattern="\([0-9]{2}\)[\s][0-9]{5}-[0-9]{4}"
+                        required
+                        v-model="phoneEdit.number"
+                        :change="mask(phoneEdit.number, 'edit')"
+                      />
+                    </label>
+                  </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn color="green darken-1" text @click="closeEdit" reset>
+                        Sair
+                      </v-btn>
+                      <v-btn type="submit" color="green darken-1" text reset reset>
+                        Editar
+                      </v-btn>
+                    </v-card-actions>
+                  </form>
+                </v-card>
+              </v-dialog>
+            </v-row>
+
+          </v-container>
+        </v-main>
+      </v-app>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+      new Vue({
+        el: "#app",
+        vuetify: new Vuetify(),
+        data: {
+          phones: [
+            { id: 1, name: "Ana Lis", number: "(41) 00000-0000" },
+            { id: 2, name: "João Silva", number: "(11) 00000-0000" },
+          ],
+          phone: {},
+          phoneEdit: {},
+          phoneId: {},
+          modelCreate: false,
+          modelEdit: false,
+        },
+        methods: {
+          createId() {
+            try {
+              return this.phones[this.phones.length - 1].id + 1;
+            } catch {
+              return 1;
+            }
+          },
+          openEdit(element) {
+            this.modelEdit = true;
+            this.phoneId = element.id;
+          },
+          closeAdd() {
+            this.modelCreate = false;
+            this.phone = {}
+          },
+          closeEdit() {
+            this.modelEdit = false;
+            this.phoneEdit = {}
+          },
+          addContact() {
+            this.phones.push({
+              name: this.phone.name,
+              number: this.phone.number,
+              id: this.createId(),
+            });
+            this.modelCreate = false;
+            this.phone = {}
+
+          },
+          deleteContact(element) {
+            this.phones = this.phones.filter((item) => item.id !== element.id);
+          },
+          editContact() {
+            let newContact = this.phones.find(
+              (item) => item.id === this.phoneId
+            );
+            newContact.name = this.phoneEdit.name;
+            newContact.number = this.phoneEdit.number;
+            this.modelEdit = false;
+          },
+          mask(value, key) {
+            if (value) {
+              value = value.replace(/\D/g, "");
+              value = value.replace(/^(\d{2})(\d)/g, "($1) $2");
+              value = value.replace(/(\d)(\d{4})$/, "$1-$2");
+              if(key === 'add'){
+              this.phone.number = value;
+              }
+              this.phoneEdit.number = value
+            }
+          },
+          sortFunc: function () {
+            return this.phones.slice().sort(function (a, b) {
+              return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1;
+            });
+          },
+        },
+      });
+    </script>
+
+    <style>
+      label {
+        width: 90%;
+      }
+      input:required:valid {
+        border: 2px solid green;
+      }
+      input:required:not(:placeholder-shown):invalid {
+        border: 2px solid red;
+      }
+    </style>
+  </body>
+</html>
