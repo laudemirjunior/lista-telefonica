@@ -150,7 +150,7 @@
                       <v-btn color="green darken-1" text @click="closeEdit" reset>
                         Sair
                       </v-btn>
-                      <v-btn type="submit" color="green darken-1" text reset reset>
+                      <v-btn type="submit" color="green darken-1" text reset>
                         Editar
                       </v-btn>
                     </v-card-actions>
@@ -220,6 +220,7 @@
             newContact.name = this.phoneEdit.name;
             newContact.number = this.phoneEdit.number;
             this.modelEdit = false;
+            this.phoneEdit = {}
           },
           mask(value, key) {
             if (value) {
